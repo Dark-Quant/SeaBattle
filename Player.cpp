@@ -70,15 +70,17 @@ std::vector<std::vector<char>> Player::create() {
 std::pair<int, int> Player::shot() {
     ++_shotsCount;
     switch (_last_result) {
-        case Result::KILL:
-            kill_ship({}, {});
+        case Result::KILL: {
+            auto [start, end] = get_opponent_ship(_last_shot);
+            kill_ship(start, end);
+        }
         case Result::MISS:
-            random_shot();
+            _last_shot = random_shot();
             break;
         case Result::SHOT:
             break;
     }
-    _last_shot = {};
+    return _last_shot;
 }
 
 //0 - не попал
@@ -104,20 +106,20 @@ int Player::opponent_shot(const std::pair<int, int> &coords) {
             if (field[i][j] == SHIP_CHAR) return Result::SHOT;
             dx = j - x;
             dy = i - y;
-            int cx = j, cy = i;
+            int nextX = j, nextY = i;
             std::pair startShip{x, y}, endShip{x, y};
-            while (field[cy][cx] != NOTHING_CHAR) {
+            while (field[nextY][nextX] != NOTHING_CHAR) {
                 if (!(x + dx >= 0 && x + dx <= MAX_INDEX &&
                       y + dy >= 0 && y + dy <= MAX_INDEX)) {
                     break;
                 }
-                startShip = std::min(startShip, {cx, cy});
-                endShip = std::max(endShip, {cx, cy});
-                if (field[cy][cx] == SHIP_CHAR) {
+                startShip = std::min(startShip, {nextX, nextY});
+                endShip = std::max(endShip, {nextX, nextY});
+                if (field[nextY][nextX] == SHIP_CHAR) {
                     return Result::SHOT;
                 }
-                cx += dx;
-                cy += dy;
+                nextX += dx;
+                nextY += dy;
             }
         }
     }
@@ -211,14 +213,14 @@ std::pair<std::pair<int, int>, std::pair<int, int>> Player::get_opponent_ship(st
             if (i == y && j == x) continue;
             if (_opponent_field[i][j] == NOTHING_CHAR || _opponent_field[i][j] == MISS_CHAR) continue;
             int dx = j - x, dy = i - y;
-            int cx = j, cy = i;
-            while (cx >= 0 && cx <= MAX_INDEX &&
-                   cy >= 0 && cy <= MAX_INDEX) {
-                if (_opponent_field[cy][cx] == NOTHING_CHAR) break;
-                startShip = std::min(startShip, {cx, cy});
-                endShip = std::max(endShip, {cx, cy});
-                cx += dx;
-                cy += dy;
+            int nextX = j, nextY = i;
+            while (nextX >= 0 && nextX <= MAX_INDEX &&
+                   nextY >= 0 && nextY <= MAX_INDEX) {
+                if (_opponent_field[nextY][nextX] == NOTHING_CHAR) break;
+                startShip = std::min(startShip, {nextX, nextY});
+                endShip = std::max(endShip, {nextX, nextY});
+                nextX += dx;
+                nextY += dy;
             }
         }
     }

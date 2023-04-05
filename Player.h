@@ -25,7 +25,7 @@ public:
     };
     std::vector<std::vector<char>> _opponent_field;
 
-    std::pair<std::pair<int, int>, std::pair<int, int>> get_ship(std::pair<int, int> coords);
+    std::pair<std::pair<int, int>, std::pair<int, int>> get_opponent_ship(std::pair<int, int> coords);
 private:
     enum Style {
         CENTER,

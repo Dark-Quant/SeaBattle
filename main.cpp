@@ -14,7 +14,7 @@ int main() {
         std::cout << std::endl;
     }
 
-    auto [start, end] = player.get_ship({1, 3});
+    auto [start, end] = player.get_opponent_ship({1, 3});
 
     std::cout << start.first << ' ' << start.second << std::endl <<
     end.first << ' ' << end.second << std::endl;

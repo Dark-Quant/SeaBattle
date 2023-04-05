@@ -99,7 +99,7 @@ int Player::opponent_shot(const std::pair<int, int> &coords) {
     int dx{}, dy{};
     for (int i = std::max(y - 1, 0); i <= std::min(y + 1, MAX_INDEX); i++) {
         for (int j = std::max(x - 1, 0); j <= std::min(x + 1, MAX_INDEX); j++) {
-            if (i == x && j == y) continue;
+            if (i == y && j == x) continue;
             if (free_cage({j, i})) continue;
             if (field[i][j] == SHIP_CHAR) return Result::SHOT;
             dx = j - x;
@@ -139,7 +139,7 @@ bool Player::check_cage(const std::pair<int, int> &coords) {
 
 bool Player::free_cage(const std::pair<int, int> &coords) {
     auto [x, y] = coords;
-    bool res = field[y][x] == '.' || field[y][x] == MISS_CHAR;
+    bool res = field[y][x] == NOTHING_CHAR || field[y][x] == MISS_CHAR;
     return res;
 }
 
@@ -203,18 +203,18 @@ void Player::get_shot_res(int res) {
     _last_result = static_cast<Result>(res);
 }
 
-std::pair<std::pair<int, int>, std::pair<int, int>> Player::get_ship(std::pair<int, int> coords) {
+std::pair<std::pair<int, int>, std::pair<int, int>> Player::get_opponent_ship(std::pair<int, int> coords) {
     auto [x, y] = coords;
     std::pair startShip{x, y}, endShip{x, y};
     for (int i = std::max(y - 1, 0); i <= std::min(y + 1, MAX_INDEX); i++) {
         for (int j = std::max(x - 1, 0); j <= std::min(x + 1, MAX_INDEX); j++) {
-            if (i == x && j == y) continue;
-            if (free_cage({j, i})) continue;
+            if (i == y && j == x) continue;
+            if (_opponent_field[i][j] == NOTHING_CHAR || _opponent_field[i][j] == MISS_CHAR) continue;
             int dx = j - x, dy = i - y;
             int cx = j, cy = i;
-            while (x + dx >= 0 && x + dx <= MAX_INDEX &&
-                                                    y + dy >= 0 && y + dy <= MAX_INDEX) {
-                if (field[cy][cx] != NOTHING_CHAR) break;
+            while (cx >= 0 && cx <= MAX_INDEX &&
+                   cy >= 0 && cy <= MAX_INDEX) {
+                if (_opponent_field[cy][cx] == NOTHING_CHAR) break;
                 startShip = std::min(startShip, {cx, cy});
                 endShip = std::max(endShip, {cx, cy});
                 cx += dx;

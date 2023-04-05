@@ -1,37 +1,36 @@
 #include "Player.h"
 
-int main()
-{
+int main() {
     Player player;
     auto f = player.create();
 
-    for (auto i : f)
-    {
-        for (auto j : i)
-        {
-            std::cout << j;
+    while (std::cin.get()) {
+        auto [x, y] = player.shot(0);
+        player._opponent_field[y][x] = 'M';
+        for (const auto &i: player._opponent_field) {
+            for (auto j: i) {
+                std::cout << j << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
-//    std::random_device rd;
-//    std::mt19937::result_type _seed = rd() ^ (
-//            (std::mt19937::result_type)
-//                    std::chrono::duration_cast<std::chrono::seconds>(
-//                            std::chrono::system_clock::now().time_since_epoch()
-//                    ).count() +
-//            (std::mt19937::result_type)
-//                    std::chrono::duration_cast<std::chrono::microseconds>(
-//                            std::chrono::high_resolution_clock::now().time_since_epoch()
-//                    ).count() );
-//
-//    std::mt19937 gen(_seed);
-//    std::uniform_int_distribution<unsigned> _distrib(1, 6);
-//
-//    for( unsigned long j = 0; j < 100500; ++j )
+//    for (int i = 0; i < 10; ++i)
 //    {
-//        std::cout << _distrib(gen) << ' ';
+//        int x{}, y{};
+//        std::cin >> x >> y;
+//        switch (player.opponent_shot({x, y}))
+//        {
+//            case Player::Result::MISS:
+//                std::cout << "MISS";
+//                break;
+//            case Player::Result::SHOT:
+//                std::cout << "SHOT";
+//                break;
+//            case Player::Result::KILL:
+//                std::cout << "KILL";
+//                break;
+//        }
+//        std::cout << std::endl;
 //    }
-//
-//    std::cout << '\n';
     return 0;
 }

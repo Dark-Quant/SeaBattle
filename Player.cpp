@@ -10,7 +10,7 @@
 #define CENTER_SHOTS_COUNT 2
 #define BORDER_SHOTS_COUNT 6
 
-Player::Player() : _random{}, _style{Style::CENTER}, _shotsCount{} {}
+Player::Player() : _random{}, _style{Style::CENTER}, _shotsCount{}, _last_result{Result::MISS}, _last_shot{} {}
 
 std::vector<std::vector<char>> Player::create() {
     field.resize(10, std::vector<char>(10, NOTHING_CHAR));
@@ -67,10 +67,18 @@ std::vector<std::vector<char>> Player::create() {
     return field;
 }
 
-std::pair<int, int> Player::shot(int result) {
+std::pair<int, int> Player::shot() {
     ++_shotsCount;
-
-    _last_shot =
+    switch (_last_result) {
+        case Result::KILL:
+            kill_ship({}, {});
+        case Result::MISS:
+            random_shot();
+            break;
+        case Result::SHOT:
+            break;
+    }
+    _last_shot = {};
 }
 
 //0 - не попал
@@ -131,7 +139,8 @@ bool Player::check_cage(const std::pair<int, int> &coords) {
 
 bool Player::free_cage(const std::pair<int, int> &coords) {
     auto [x, y] = coords;
-    return field[y][x] == NOTHING_CHAR || field[y][x] == MISS_CHAR;
+    bool res = field[y][x] == '.' || field[y][x] == MISS_CHAR;
+    return res;
 }
 
 void Player::kill_ship(const std::pair<int, int> &startShip, const std::pair<int, int> &endShip) {
@@ -191,14 +200,28 @@ std::pair<int, int> Player::random_shot() {
 }
 
 void Player::get_shot_res(int res) {
-    switch (result) {
-        case Result::MISS:
-            break;
-        case Result::SHOT:
-            break;
-        case Result::KILL:
-            break;
-    }
+    _last_result = static_cast<Result>(res);
 }
 
+std::pair<std::pair<int, int>, std::pair<int, int>> Player::get_ship(std::pair<int, int> coords) {
+    auto [x, y] = coords;
+    std::pair startShip{x, y}, endShip{x, y};
+    for (int i = std::max(y - 1, 0); i <= std::min(y + 1, MAX_INDEX); i++) {
+        for (int j = std::max(x - 1, 0); j <= std::min(x + 1, MAX_INDEX); j++) {
+            if (i == x && j == y) continue;
+            if (free_cage({j, i})) continue;
+            int dx = j - x, dy = i - y;
+            int cx = j, cy = i;
+            while (x + dx >= 0 && x + dx <= MAX_INDEX &&
+                                                    y + dy >= 0 && y + dy <= MAX_INDEX) {
+                if (field[cy][cx] != NOTHING_CHAR) break;
+                startShip = std::min(startShip, {cx, cy});
+                endShip = std::max(endShip, {cx, cy});
+                cx += dx;
+                cy += dy;
+            }
+        }
+    }
+    return std::pair{startShip, endShip};
 }
+

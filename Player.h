@@ -10,7 +10,7 @@ public:
 
     std::vector<std::vector<char>> create();
 
-    std::pair<int, int> shot(int result);
+    std::pair<int, int> shot();
 
     int opponent_shot(const std::pair<int, int> &coords);
     
@@ -24,6 +24,8 @@ public:
         KILL = 2
     };
     std::vector<std::vector<char>> _opponent_field;
+
+    std::pair<std::pair<int, int>, std::pair<int, int>> get_ship(std::pair<int, int> coords);
 private:
     enum Style {
         CENTER,
@@ -33,6 +35,7 @@ private:
     Random<unsigned> _random;
     unsigned _shotsCount;
     std::pair<int, int> _last_shot;
+    Result _last_result;
 
     bool check_cage(const std::pair<int, int> &coords);
 
@@ -43,4 +46,5 @@ private:
     bool isMiss(const std::pair<int, int> &coords);
 
     std::pair<int, int> random_shot();
+
 };

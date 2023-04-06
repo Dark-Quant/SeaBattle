@@ -1,20 +1,13 @@
 #include "Player.h"
 
-#define NOTHING_CHAR '.'
-#define MISS_CHAR 'M'
-#define SHIP_CHAR 'X'
-#define SHOT_CHAR 'S'
-
-#define MAX_INDEX 9
-
-#define CENTER_SHOTS_COUNT 2
-#define BORDER_SHOTS_COUNT 6
-
-Player::Player() : _random{}, _style{Style::CENTER}, _shotsCount{}, _last_result{Result::MISS}, _last_shot{} {}
+Player::Player()
+        : _random{}, _style{Style::CENTER}, _shotsCount{}, _lastResult{Result::MISS}, _lastShot{},
+          _lastDirection{}, _firstShot{true}, _isLastHit{false}, _directionsX{-1, 0, 1}, _directionsY{-1, 0, 1},
+          _prevLastShot{} {}
 
 std::vector<std::vector<char>> Player::create() {
     field.resize(10, std::vector<char>(10, NOTHING_CHAR));
-    _opponent_field.resize(10, std::vector<char>(10, NOTHING_CHAR));
+    _opponentField.resize(10, std::vector<char>(10, NOTHING_CHAR));
     unsigned startY, endY, startX, endX, direction;
     int dy, dx;
     std::pair coords{0, 0};
@@ -67,66 +60,102 @@ std::vector<std::vector<char>> Player::create() {
     return field;
 }
 
-std::pair<int, int> Player::shot() {
-    ++_shotsCount;
-    switch (_last_result) {
-        case Result::KILL: {
-            auto [start, end] = get_opponent_ship(_last_shot);
-            kill_ship(start, end);
-        }
-        case Result::MISS:
-            _last_shot = random_shot();
-            break;
-        case Result::SHOT:
-            break;
-    }
-    return _last_shot;
+Player::CoordsT Player::shot() {
+//    ++_shotsCount;
+//    _prevLastShot = _lastShot;
+//    auto &[x, y] = _lastShot;
+//    switch (_lastResult) {
+//        case Result::KILL: {
+//            auto [start, end] = get_opponent_ship(_lastShot);
+//            kill_ship(start, end);
+//            _lastShot = random_shot();
+//            _isLastHit = false;
+//        }
+//            break;
+//        case Result::MISS:
+//            _opponentField[_lastShot.second][_lastShot.first] = MISS_CHAR;
+//            if (!_isLastHit) {
+//                _lastShot = random_shot();
+//                break;
+//            }
+//        case Result::SHOT: {
+//            auto &[dirX, dirY] = _lastDirection;
+//            if (_firstShot && _opponentField[_lastShot.second][_lastShot.first] == 'S') {
+//                _firstShot = false;
+//            } else if (_firstShot) {
+//                do {
+//                    x = _lastShot.first;
+//                    y = _lastShot.second;
+//                    switch (_random(0, 3)) {
+//                        case 0:
+//                            x += 1;
+//                            break;
+//                        case 1:
+//                            x -= 1;
+//                            break;
+//                        case 2:
+//                            y += 1;
+//                            break;
+//                        case 3:
+//                            y -= 1;
+//                            break;
+//                    }
+//                } while (_opponentField[y][x] == 'M');
+//            }
+//            if (dirX == 0 && dirY == 0 && !_firstShot) {
+//                dirX = _lastShot.first - _prevLastShot.first;
+//                dirY = _lastShot.second - _prevLastShot.second;
+//            }
+//
+//            if (_opponentField[y][x] == MISS_CHAR) {
+//                dirX *= -1;
+//                dirY *= -1;
+//            }
+//
+//            while (_opponentField[y][x] == SHOT_CHAR) {
+//                x += dirX;
+//                y += dirY;
+//            }
+//
+//            _isLastHit = true;
+//        }
+//            break;
+//    }
+//    return _lastShot;
+    return {_random(0, 9), _random(0, 9)};
 }
 
-//0 - не попал
-//1 - попал
-//2 - убил
-int Player::opponent_shot(const std::pair<int, int> &coords) {
-    auto [x, y] = coords;
+int Player::opponent_shot(Player::CoordsT coords) {
+    auto [y, x] = coords;
 
     if (field[y][x] == NOTHING_CHAR)
         return Result::MISS;
 
-    if (field[y][x] == SHIP_CHAR && check_cage(coords)) {
-        field[y][x] = SHOT_CHAR;
-        return Result::KILL;
-    }
-
     field[y][x] = SHOT_CHAR;
-    int dx{}, dy{};
-    for (int i = std::max(y - 1, 0); i <= std::min(y + 1, MAX_INDEX); i++) {
-        for (int j = std::max(x - 1, 0); j <= std::min(x + 1, MAX_INDEX); j++) {
-            if (i == y && j == x) continue;
-            if (free_cage({j, i})) continue;
-            if (field[i][j] == SHIP_CHAR) return Result::SHOT;
-            dx = j - x;
-            dy = i - y;
-            int nextX = j, nextY = i;
-            std::pair startShip{x, y}, endShip{x, y};
+    int nextX, nextY;
+    for (int dirY: _directionsY) {
+        for (int dirX: _directionsX) {
+            nextX = x + dirX;
+            nextY = y + dirY;
+            if (nextX < 0 || nextX > MAX_INDEX || nextY < 0 || nextY > MAX_INDEX) continue;
+            if (field[nextY][nextX] == NOTHING_CHAR) continue;
+            if (field[nextY][nextX] == SHIP_CHAR) return Result::SHOT;
             while (field[nextY][nextX] != NOTHING_CHAR) {
-                if (!(x + dx >= 0 && x + dx <= MAX_INDEX &&
-                      y + dy >= 0 && y + dy <= MAX_INDEX)) {
+                if (nextX < 0 || nextX > MAX_INDEX || nextY < 0 || nextY > MAX_INDEX) {
                     break;
                 }
-                startShip = std::min(startShip, {nextX, nextY});
-                endShip = std::max(endShip, {nextX, nextY});
                 if (field[nextY][nextX] == SHIP_CHAR) {
                     return Result::SHOT;
                 }
-                nextX += dx;
-                nextY += dy;
+                nextX += dirX;
+                nextY += dirY;
             }
         }
     }
     return Result::KILL;
 }
 
-bool Player::check_cage(const std::pair<int, int> &coords) {
+bool Player::check_cage(const Player::CoordsT &coords) {
     auto [x, y] = coords;
     for (int i = std::max(y - 1, 0); i <= std::min(y + 1, 9); i++) {
         for (int j = std::max(x - 1, 0); j <= std::min(x + 1, 9); j++) {
@@ -139,29 +168,23 @@ bool Player::check_cage(const std::pair<int, int> &coords) {
     return true;
 }
 
-bool Player::free_cage(const std::pair<int, int> &coords) {
-    auto [x, y] = coords;
-    bool res = field[y][x] == NOTHING_CHAR || field[y][x] == MISS_CHAR;
-    return res;
-}
-
-void Player::kill_ship(const std::pair<int, int> &startShip, const std::pair<int, int> &endShip) {
+void Player::kill_ship(const Player::CoordsT &startShip, const Player::CoordsT &endShip) {
     auto [startX, startY] = startShip;
     auto [endX, endY] = endShip;
     for (int i = std::max(startY - 1, 0); i <= std::min(endY + 1, 9); ++i) {
         for (int j = std::max(startX - 1, 0); j <= std::min(endX + 1, 9); ++j) {
             if ((i >= startY && i <= endY) && (j >= startX && j <= endX)) continue;
-            _opponent_field[i][j] = MISS_CHAR;
+            _opponentField[i][j] = MISS_CHAR;
         }
     }
 }
 
-bool Player::isMiss(const std::pair<int, int> &coords) {
+bool Player::isMiss(const Player::CoordsT &coords) {
     const auto &[x, y] = coords;
-    return _opponent_field[y][x] == MISS_CHAR;
+    return _opponentField[y][x] == MISS_CHAR;
 }
 
-std::pair<int, int> Player::random_shot() {
+Player::CoordsT Player::random_shot() {
     unsigned x{}, y{};
     switch (_style) {
         case Style::CENTER:
@@ -202,28 +225,37 @@ std::pair<int, int> Player::random_shot() {
 }
 
 void Player::get_shot_res(int res) {
-    _last_result = static_cast<Result>(res);
+    _lastResult = static_cast<Result>(res);
 }
 
-std::pair<std::pair<int, int>, std::pair<int, int>> Player::get_opponent_ship(std::pair<int, int> coords) {
+std::pair<Player::CoordsT, Player::CoordsT> Player::get_opponent_ship(const Player::CoordsT &coords) {
     auto [x, y] = coords;
-    std::pair startShip{x, y}, endShip{x, y};
-    for (int i = std::max(y - 1, 0); i <= std::min(y + 1, MAX_INDEX); i++) {
-        for (int j = std::max(x - 1, 0); j <= std::min(x + 1, MAX_INDEX); j++) {
-            if (i == y && j == x) continue;
-            if (_opponent_field[i][j] == NOTHING_CHAR || _opponent_field[i][j] == MISS_CHAR) continue;
-            int dx = j - x, dy = i - y;
-            int nextX = j, nextY = i;
-            while (nextX >= 0 && nextX <= MAX_INDEX &&
-                   nextY >= 0 && nextY <= MAX_INDEX) {
-                if (_opponent_field[nextY][nextX] == NOTHING_CHAR) break;
+    int directionsX[] = {-1, 0, 1}, directionsY[] = {-1, 0, 1};
+    int nextX, nextY;
+    CoordsT startShip, endShip;
+
+    for (int dirY: directionsY) {
+        for (int dirX: directionsX) {
+            nextX = x + dirX;
+            nextY = y + dirY;
+            if (nextX < 0 || nextX > MAX_INDEX || nextY < 0 || nextY > MAX_INDEX) continue;
+            if (field[nextY][nextX] == NOTHING_CHAR) continue;
+            startShip = {x, y};
+            endShip = {x, y};
+            while (field[nextY][nextX] != NOTHING_CHAR) {
+                if (nextX < 0 || nextX > MAX_INDEX || nextY < 0 || nextY > MAX_INDEX) {
+                    break;
+                }
                 startShip = std::min(startShip, {nextX, nextY});
                 endShip = std::max(endShip, {nextX, nextY});
-                nextX += dx;
-                nextY += dy;
+                nextX += dirX;
+                nextY += dirY;
             }
         }
     }
-    return std::pair{startShip, endShip};
+    return {startShip, endShip};
 }
 
+string Player::team_name() {
+    return "Lopushok";
+}

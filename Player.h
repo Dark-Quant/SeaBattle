@@ -2,18 +2,33 @@
 
 #include <iostream>
 
-#include "Random.h"
+#define NOTHING_CHAR '.'
+#define MISS_CHAR 'M'
+#define SHIP_CHAR 'X'
+#define SHOT_CHAR 'S'
 
-class Player {
+#define MAX_INDEX 9
+
+#define CENTER_SHOTS_COUNT 2
+#define BORDER_SHOTS_COUNT 6
+
+#define DIRS_NUM 3
+
+#include "Random.h"
+#include "IPlayer.hpp"
+
+class Player : public IPlayer {
 public:
+    typedef std::pair<int, int> CoordsT;
+
     Player();
 
-    std::vector<std::vector<char>> create();
+    std::vector<std::vector<char>> create() override;
 
-    std::pair<int, int> shot();
+    CoordsT shot() override;
 
-    int opponent_shot(const std::pair<int, int> &coords);
-    
+    int opponent_shot(CoordsT coords) override;
+
     void get_shot_res(int res);
 
     std::vector<std::vector<char>> field;
@@ -23,9 +38,11 @@ public:
         SHOT = 1,
         KILL = 2
     };
-    std::vector<std::vector<char>> _opponent_field;
 
-    std::pair<std::pair<int, int>, std::pair<int, int>> get_opponent_ship(std::pair<int, int> coords);
+
+    std::vector<std::vector<char>> _opponentField;
+
+    string team_name() override;
 private:
     enum Style {
         CENTER,
@@ -34,17 +51,21 @@ private:
     } _style;
     Random<unsigned> _random;
     unsigned _shotsCount;
-    std::pair<int, int> _last_shot;
-    Result _last_result;
+    CoordsT _lastShot;
+    CoordsT _prevLastShot;
+    Result _lastResult;
+    CoordsT _lastDirection;
+    bool _firstShot;
+    bool _isLastHit;
+    int _directionsX[DIRS_NUM], _directionsY[DIRS_NUM];
 
-    bool check_cage(const std::pair<int, int> &coords);
+    std::pair<CoordsT, CoordsT> get_opponent_ship(const CoordsT &coords);
 
-    bool free_cage(const std::pair<int, int> &coords);
+    bool check_cage(const CoordsT &coords);
 
-    void kill_ship(const std::pair<int, int> &startShip, const std::pair<int, int> &endShip);
+    void kill_ship(const CoordsT &startShip, const CoordsT &endShip);
 
-    bool isMiss(const std::pair<int, int> &coords);
+    bool isMiss(const CoordsT &coords);
 
-    std::pair<int, int> random_shot();
-
+    CoordsT random_shot();
 };

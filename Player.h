@@ -34,6 +34,7 @@ public:
     std::vector<std::vector<char>> field;
 
     enum Result {
+        UNDEFINED = -1,
         MISS = 0,
         SHOT = 1,
         KILL = 2
@@ -43,6 +44,7 @@ public:
     std::vector<std::vector<char>> _opponentField;
 
     string team_name() override;
+
 private:
     enum Style {
         CENTER,
@@ -59,13 +61,14 @@ private:
     bool _isLastHit;
     int _directionsX[DIRS_NUM], _directionsY[DIRS_NUM];
 
-    std::pair<CoordsT, CoordsT> get_opponent_ship(const CoordsT &coords);
+    std::pair<CoordsT, CoordsT> getOpponentShip(const CoordsT &coords);
 
-    bool check_cage(const CoordsT &coords);
+    bool checkCage(const CoordsT &coords);
 
-    void kill_ship(const CoordsT &startShip, const CoordsT &endShip);
+    void killShip(const CoordsT &startShip, const CoordsT &endShip);
 
     bool isMiss(const CoordsT &coords);
+    bool isInRange(const CoordsT &coords);
 
     CoordsT random_shot();
 };

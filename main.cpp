@@ -7,4 +7,5 @@ int main() {
     Player p2;
     Game game;
     game.game(p1, p2);
+    cin.get();
 }

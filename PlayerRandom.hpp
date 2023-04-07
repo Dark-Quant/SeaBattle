@@ -140,7 +140,7 @@ struct PlayerRandom : public IPlayer {
     int opponent_shot(pair<int, int> p) {
         int x = p.first;
         int y = p.second;
-        if (field[x][y] != 'X') {
+       if (field[x][y] != 'X') {
             return 0;
         }
         field[x][y] = 'P';

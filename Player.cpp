@@ -1,13 +1,26 @@
 #include "Player.h"
 
+struct hash_pair {
+    size_t operator()(pair<int, int> p) {
+        size_t h1 = hash<int>(p.first), h2 = hash<int>(p.second);
+
+    }
+};
+
 Player::Player()
         : _random{}, _style{Style::CENTER}, _shotsCount{}, _lastResult{Result::UNDEFINED}, _lastShot{-1, -1},
           _prevLastShot{-1, -1}, _lastDirection{}, _firstShot{true}, _isLastHit{false}, _directionsX{-1, 0, 1},
-          _directionsY{-1, 0, 1} {}
+          _directionsY{-1, 0, 1}{}
 
 std::vector<std::vector<char>> Player::create() {
     field.resize(10, std::vector<char>(10, NOTHING_CHAR));
     _opponentField.resize(10, std::vector<char>(10, NOTHING_CHAR));
+    for (int i = 0; i <= MAX_INDEX; i++) {
+        for (int j = 0; j <= MAX_INDEX; j++) {
+            CoordsT p{j, i};
+            unchecked_cages.insert(p);
+        }
+    }
     unsigned startY, endY, startX, endX, direction;
     int dy, dx;
     std::pair coords{0, 0};
@@ -61,79 +74,82 @@ std::vector<std::vector<char>> Player::create() {
 }
 
 Player::CoordsT Player::shot() {
-    _prevLastShot = _lastShot;
-    auto &[x, y] = _lastShot;
-    switch (_lastResult) {
-        case Result::UNDEFINED:
-            _lastShot = random_shot();
-            break;
-        case Result::KILL: {
-            auto [start, end] = getOpponentShip(_lastShot);
-            killShip(start, end);
-            _lastShot = random_shot();
-            _isLastHit = false;
-        }
-            break;
-        case Result::MISS:
-            _opponentField[_lastShot.second][_lastShot.first] = MISS_CHAR;
-            if (!_isLastHit) {
-                _lastShot = random_shot();
-                break;
-            }
-        case Result::SHOT: {
-            _opponentField[y][x] = SHOT_CHAR;
-            auto &[dirX, dirY] = _lastDirection;
-            if (_firstShot && _opponentField[_lastShot.second][_lastShot.first] == SHIP_CHAR) {
-                _firstShot = false;
-            } else if (_firstShot) {
-                do {
-                    x = _lastShot.first;
-                    y = _lastShot.second;
-                    switch (_random(0, 3)) {
-                        case 0:
-                            x += 1;
-                            break;
-                        case 1:
-                            x -= 1;
-                            break;
-                        case 2:
-                            y += 1;
-                            break;
-                        case 3:
-                            y -= 1;
-                            break;
-                    }
-                } while (isInRange({x, y}) && _opponentField[y][x] == MISS_CHAR);
-
-            }
-            if (isInRange({x, y}) && _opponentField[y][x] == MISS_CHAR && dirX == 0 &&
-                dirY == 0 && _lastShot.first!=_prevLastShot.first&&_lastShot.second!=_prevLastShot.second) {
-                dirX = _lastShot.first - _prevLastShot.first;
-                dirY = _lastShot.second - _prevLastShot.second;
-            }
-
-            if (isInRange({x, y}) && _opponentField[y][x] == MISS_CHAR) {
-                dirX *= -1;
-                dirY *= -1;
-            }
-
-            while (isInRange({x + dirX, y + dirY}) && _opponentField[y][x] == SHOT_CHAR) {
-                x += dirX;
-                y += dirY;
-            }
-
-            _isLastHit = true;
-        }
-            break;
-    }
-    return {_lastShot.second, _lastShot.first};
-//    return {_random(0, 9), _random(0, 9)};
+//    _prevLastShot = _lastShot;
+//    auto &[x, y] = _lastShot;
+//    switch (_lastResult) {
+//        case Result::UNDEFINED:
+//            _lastShot = random_shot();
+//            break;
+//        case Result::KILL: {
+//            auto [start, end] = getOpponentShip(_lastShot);
+//            killShip(start, end);
+//            _lastShot = random_shot();
+//            _isLastHit = false;
+//        }
+//            break;
+//        case Result::MISS:
+//            _opponentField[_lastShot.second][_lastShot.first] = MISS_CHAR;
+//            if (!_isLastHit) {
+//                _lastShot = random_shot();
+//            }
+//            break;
+//        case Result::SHOT: {
+//            _opponentField[y][x] = SHOT_CHAR;
+//            auto &[dirX, dirY] = _lastDirection;
+//            if (_firstShot && _opponentField[_lastShot.second][_lastShot.first] == SHIP_CHAR) {
+//                _firstShot = false;
+//            } else if (_firstShot) {
+//                do {
+//                    x = _lastShot.first;
+//                    y = _lastShot.second;
+//                    switch (_random(0, 3)) {
+//                        case 0:
+//                            x += 1;
+//                            break;
+//                        case 1:
+//                            x -= 1;
+//                            break;
+//                        case 2:
+//                            y += 1;
+//                            break;
+//                        case 3:
+//                            y -= 1;
+//                            break;
+//                    }
+//                } while (isInRange({x, y}) && _opponentField[y][x] == MISS_CHAR);
+//
+//            }
+//            if (isInRange({x, y}) && _opponentField[y][x] == MISS_CHAR && dirX == 0 &&
+//                dirY == 0 && _lastShot.first!=_prevLastShot.first&&_lastShot.second!=_prevLastShot.second) {
+//                dirX = _lastShot.first - _prevLastShot.first;
+//                dirY = _lastShot.second - _prevLastShot.second;
+//            }
+//
+//            if (isInRange({x, y}) && _opponentField[y][x] == MISS_CHAR) {
+//                dirX *= -1;
+//                dirY *= -1;
+//            }
+//
+//            while (isInRange({x + dirX, y + dirY}) && _opponentField[y][x] == SHOT_CHAR) {
+//                x += dirX;
+//                y += dirY;
+//            }
+//
+//            _isLastHit = true;
+//        }
+//            break;
+//    }
+//    return {_lastShot.second, _lastShot.first};
+    do {
+        _lastShot = {_random(0, 9), _random(0, 9)};
+    }while(isMiss(_lastShot) || _opponentField[_lastShot.second][_lastShot.first] == SHOT_CHAR);
+    return _lastShot;
 }
 
 int Player::opponent_shot(Player::CoordsT coords) {
     auto [y, x] = coords;
 
-    if (field[y][x] == NOTHING_CHAR)
+    if (field[y][x] == NOTHING_CHAR || field[y][x] == SHOT_CHAR)
         return Result::MISS;
 
     field[y][x] = SHOT_CHAR;
@@ -147,7 +163,7 @@ int Player::opponent_shot(Player::CoordsT coords) {
             if (field[nextY][nextX] == NOTHING_CHAR) continue;
             if (field[nextY][nextX] == SHIP_CHAR) return Result::SHOT;
             while (isInRange({nextX, nextY})) {
-                if (field[nextY][nextX] == NOTHING_CHAR && field[nextY][nextX] == MISS_CHAR) {
+                if (field[nextY][nextX] == NOTHING_CHAR || field[nextY][nextX] == MISS_CHAR) {
                     break;
                 }
                 if (field[nextY][nextX] == SHIP_CHAR) {
@@ -197,7 +213,7 @@ Player::CoordsT Player::random_shot() {
                 x = _random(4, 5);
                 y = _random(4, 5);
             } while (isMiss({x, y}));
-            if (_shotsCount == CENTER_SHOTS_COUNT) {
+            if (_shotsCount == CENTER_SHOTS_COUNT || _opponentField[y][x] == SHOT_CHAR) {
                 _style = Style::BORDERS;
             }
             break;
@@ -207,12 +223,12 @@ Player::CoordsT Player::random_shot() {
                 do {
                     x = _random(0, 1) * MAX_INDEX;
                     y = _random(0, MAX_INDEX);
-                } while (isMiss({x, y}));
+                } while (isMiss({x, y}) || _opponentField[y][x] == SHOT_CHAR);
             } else {
                 do {
                     y = _random(0, 1) * MAX_INDEX;
                     x = _random(0, MAX_INDEX);
-                } while (isMiss({x, y}));
+                } while (isMiss({x, y}) || _opponentField[y][x] == SHOT_CHAR);
             }
             if (_shotsCount == BORDER_SHOTS_COUNT) {
                 _style = Style::RANDOM;

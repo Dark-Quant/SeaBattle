@@ -24,6 +24,7 @@ public:
     Player();
 
     std::vector<std::vector<char>> create() override;
+    std::unordered_set<CoordsT, hash<pair<int, int>>> unchecked_cages;
 
     CoordsT shot() override;
 
